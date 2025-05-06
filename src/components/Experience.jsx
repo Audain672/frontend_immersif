@@ -1,39 +1,23 @@
 import {
   CameraControls,
   ContactShadows,
-  Environment,
-  Text,
+  useTexture,
 } from "@react-three/drei";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useChat } from "../hooks/useChat";
 import { Avatar } from "./Avatar";
+import SpeechBubble from "./SpeechBubble";
 
-const Dots = (props) => {
-  const { loading } = useChat();
-  const [loadingText, setLoadingText] = useState("");
-  useEffect(() => {
-    if (loading) {
-      const interval = setInterval(() => {
-        setLoadingText((loadingText) => {
-          if (loadingText.length > 2) {
-            return ".";
-          }
-          return loadingText + ".";
-        });
-      }, 800);
-      return () => clearInterval(interval);
-    } else {
-      setLoadingText("");
-    }
-  }, [loading]);
-  if (!loading) return null;
+// Composant pour le fond d'écran
+const Background = () => {
+  // Charger la texture
+  const texture = useTexture("/texture/env.jpg");
+  
   return (
-    <group {...props}>
-      <Text fontSize={0.14} anchorX={"left"} anchorY={"bottom"}>
-        {loadingText}
-        <meshBasicMaterial attach="material" color="black" />
-      </Text>
-    </group>
+    <mesh position={[0, 0, -10]}>
+      <planeGeometry args={[20, 15]} />
+      <meshBasicMaterial map={texture} />
+    </mesh>
   );
 };
 
@@ -42,26 +26,41 @@ export const Experience = () => {
   const { cameraZoomed } = useChat();
 
   useEffect(() => {
-    cameraControls.current.setLookAt(0, 2, 5, 0, 1.5, 0);
+    if (cameraControls.current) {
+      cameraControls.current.setLookAt(0, 2, 5, 0, 1.5, 0);
+    }
   }, []);
 
   useEffect(() => {
-    if (cameraZoomed) {
-      cameraControls.current.setLookAt(0, 1.5, 1.5, 0, 1.5, 0, true);
-    } else {
-      cameraControls.current.setLookAt(0, 2.2, 5, 0, 1.0, 0, true);
+    if (cameraControls.current) {
+      if (cameraZoomed) {
+        cameraControls.current.setLookAt(0, 1.5, 1.5, 0, 1.5, 0, true);
+      } else {
+        cameraControls.current.setLookAt(0, 1.5, 1.5, 0, 1.5, 0, true);
+      }
     }
   }, [cameraZoomed]);
+  
   return (
     <>
-      <CameraControls ref={cameraControls} />
-      <Environment preset="sunset" />
-      {/* Wrapping Dots into Suspense to prevent Blink when Troika/Font is loaded */}
-      <Suspense>
-        <Dots position-y={1.75} position-x={-0.02} />
+      <CameraControls ref={cameraControls} dollySpeed={0} truck={false} azimuthRotateSpeed={false} polarRotateSpeed={false} />
+      
+      {/* Lumières pour l'éclairage de l'avatar */}
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[5, 5, 5]} intensity={0.5} />
+      <directionalLight position={[-5, 5, -5]} intensity={0.3} color="#ffaa00" />
+      
+      {/* Fond d'écran avec image */}
+      <Suspense fallback={<color attach="background" args={["#e0f7ff"]} />}>
+        <Background />
       </Suspense>
-      <Avatar />
-      <ContactShadows opacity={0.7} />
+      
+      {/* Avatar et ombres */}
+      <Suspense fallback={null}>
+        <Avatar />
+        <ContactShadows opacity={0.7} />
+        <SpeechBubble />
+      </Suspense>
     </>
   );
 };
