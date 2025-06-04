@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-const backendUrl = import.meta.env.VITE_API_URL || "https://backend-immersif-1.onrender.com";
+const backendUrl = "https://backend-immersif-1.onrender.com";
 console.log("URL du backend:", backendUrl);
 
 const ChatContext = createContext();
